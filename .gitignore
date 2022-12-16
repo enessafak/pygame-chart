@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# manual additions
+todo.txt
+yedek.py
+main.py
+deneme.py
