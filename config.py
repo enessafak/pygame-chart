@@ -2,6 +2,7 @@
 BG_COLOR = (255,255,255)
 FONT_SIZE = 16
 TEXT_COLOR = (0,0,0)
+PADDING = 10
 
 COLORS = [
 # 'tomato',palegreen,'gold','mediumaquamarine','teal','royalblue','darkviolet','pink'

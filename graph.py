@@ -1,4 +1,4 @@
-import pygame
+import pygame, math
 from config import *
 from util_functions import *
 
@@ -7,6 +7,7 @@ class Figure:
     def __init__(self,
                 screen,    
                 x, y, width, height,
+                xlim = (None, None), # (xmin, xmax)
                 bg_color = BG_COLOR,
                 font_size = FONT_SIZE
                 ):
@@ -31,6 +32,9 @@ class Figure:
         self.xaxis_label = Area(self)
         self.xaxis_tick = xaxisTick(self)
         self.chart_area = ChartArea(self)
+
+        self.chart_area.xmin = xlim[0]
+        self.chart_area.xmax = xlim[1]
 
 
     def create_figure(self):
@@ -64,9 +68,9 @@ class Figure:
     
     def set_xaxis_tick(self):
         self.xaxis_tick.width = self.width - self.yaxis_label.width
-        self.xaxis_tick.height = 20 # to be calculated later
+        #self.xaxis_tick.height = 40 # to be calculated later
         self.xaxis_tick.x = self.yaxis_label.width
-        self.xaxis_tick.y = self.height - (self.legend.height + self.xaxis_label.height - self.height)
+        self.xaxis_tick.y = self.height - (self.legend.height + self.xaxis_label.height + self.xaxis_tick.height)
         
     def set_chart_area(self):
         self.chart_area.width = self.width - self.yaxis_label.width
@@ -91,7 +95,7 @@ class Figure:
             else:
                 self.update_chart(name, x, y)
 
-    def bar(self, name, x, y, color=None, bar_width=20):# for now accept only list
+    def bar(self, name, x, y, color=None, bar_width=None):# for now accept only list
         if color == None:
             i = len(self.chart_area.charts)
             color = COLORS[i%8]
@@ -150,8 +154,26 @@ class xaxisTick(Area):
     def draw(self):
         # chart borders for now. requires margin from axis labels and/or title
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        pygame.draw.rect(self.figure.background, (0,0,0), self.rect, width=1)
+        pygame.draw.rect(self.figure.background, self.figure.bg_color, self.rect)
 
+    def fill_ticks(self):
+        min_gap = find_min_gap(self.figure.chart_area.all_x)
+        self.ticks = list(range(self.figure.chart_area.xmin, self.figure.chart_area.xmax + min_gap, min_gap))
+
+    def draw_ticks(self): # this is to calculate tick positions. currently add a tick for each x
+        self.fill_ticks()
+        self.tick_gap = self.figure.chart_area.xgap
+        for x in self.ticks: # which x's should change
+            txt = self.figure.font.render(str(x), True, TEXT_COLOR)
+            if txt.get_height() > self.height:
+                self.height = txt.get_height()
+            xpos_start = self.figure.chart_area.x + self.figure.chart_area.chart_margin
+            txt_xpos = xpos_start + x * self.tick_gap
+            txt_rect = txt.get_rect(center = (txt_xpos, self.y + self.height/2))
+            self.figure.background.blit(txt, txt_rect)
+        
+    def tick_txt(self):
+        pass
 
 
 
@@ -162,19 +184,20 @@ class ChartArea(Area):
         self.chart_names = []
         self.chart_margin = 25 # should be optimized
     
-    def draw(self):
+    def draw(self): # not necessary in final, keeping for looking for borders in development
         # chart borders for now. requires margin from axis labels and/or title
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         pygame.draw.rect(self.figure.background, (0,0,0), self.rect, width=1)
 
     def find_xgap(self):
-        all_x = []
-        for chart in self.charts:
-            all_x += chart.x
-        self.xmin = min(all_x)
-        self.xmax = max(all_x)
+        if (self.xmin == None) | (self.xmax == None):
+            self.all_x = []
+            for chart in self.charts:
+                self.all_x += chart.x
+            self.xmin = min(self.all_x)
+            self.xmax = max(self.all_x)
         self.xgap = (self.width - 2 * self.chart_margin) / (self.xmax - self.xmin)
-
+        
     def find_ymultiplier(self):
         all_y = []
         for chart in self.charts:
@@ -209,6 +232,8 @@ class ChartArea(Area):
         
         x = self.x + self.chart_margin
         y = self.y
+        if chart.bar_width is None:
+            chart.bar_width = self.xgap/3*2
         for i in range(len(data)):
             pygame.draw.rect(self.figure.background, chart.color, 
                             pygame.Rect(x + data[i][0] - chart.bar_width/2, y + data[i][1], 
@@ -237,7 +262,7 @@ class Line:
         self.line_width = line_width
 
 class Bar:
-    def __init__(self, name, x, y, color, bar_width):
+    def __init__(self, name, x, y, color, bar_width=None):
         self.name = name
         check = check_list_xy(x, y)
         if check:
@@ -247,7 +272,5 @@ class Bar:
         self.bar_width = bar_width
 
 
+
  
-
-        
-
