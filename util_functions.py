@@ -61,7 +61,7 @@ def create_range(start, stop):
 def tick_range(mindata, maxdata):
     data_span = maxdata - mindata
     scale = 10 ** math.floor(math.log10(data_span))
-    tick_size_normalized_list = [5.0, 2.0, 1.0, 0.5, 0.25, 0.1, 0.05, 0.02, 0.01]
+    tick_size_normalized_list = [5.0, 2.0, 1.0, 0.5, 0.25, 0.2, 0.1, 0.05, 0.02, 0.01]
     tick_size_normalized = 1.0
     for i in range(len(tick_size_normalized_list)):
         num_tick = data_span / scale / tick_size_normalized_list[i]
@@ -71,5 +71,9 @@ def tick_range(mindata, maxdata):
     tick_size = tick_size_normalized * scale
     ticks = create_range(mindata/tick_size, maxdata/tick_size)
     ticks = [i * tick_size for i in [round(i) for i in ticks]]
+    if maxdata not in ticks:
+        maxtick = ticks[-1] + ticks[-1] - ticks[-2]
+        ticks.append(maxtick)
+    ticks = [round(i, 5) for i in ticks]
     return ticks
 
