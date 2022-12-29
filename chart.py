@@ -1,5 +1,5 @@
 import pygame, math
-from config import *
+from settings import *
 import util_functions as util
 
 
@@ -29,8 +29,8 @@ class Figure:
                 screen,
                 x, y, width, height, # might implement an outer size (padding for the whole figure)
                 bg_color = BG_COLOR,
-                xlim = (None, None), # (xmin, xmax)
-                ylim = (None, None), # (ymin, ymax)
+                xlim = (None, None),
+                ylim = (None, None),
                 ):
 
         self.screen = screen
@@ -51,14 +51,26 @@ class Figure:
         self.yaxis_tick = yAxisTick(self)
         self.chart_area = ChartArea(self)
 
-        self.chart_area.xdata_min = xlim[0]
-        self.chart_area.xdata_max = xlim[1]
-        self.chart_area.ydata_min = ylim[0]
-        self.chart_area.ydata_max = ylim[1]
+        self.xmin = self.xmax = None
+        self.ymin = self.ymax = None
+
+        self.chart_area.xdata_min = self.chart_area.xdata_max = None
+        self.chart_area.ydata_min = self.chart_area.ydata_max = None
 
     def create_figure(self):
         self.screen.blit(self.background, (self.x, self.y))
         self.background.fill(self.bg_color)
+
+    def set_xlim(self, xlim): # (xmin, xmax)
+        if util.check_axis_limit(xlim):
+            self.xmin = xlim[0]
+            self.xmax = xlim[1]
+            self.chart_area.xdata_type = 'numeric'
+            
+    def set_ylim(self, xlim): # (ymin, ymax)
+        if util.check_axis_limit(ylim):
+            self.ymin = ylim[0]
+            self.ymax = ylim[1]
 
     def set_title(self, title):
         self.title.width = self.width
@@ -120,7 +132,6 @@ class Figure:
         for area in [self.title, self.legend, self.yaxis_label, self.xaxis_label, self.yaxis_tick, self.xaxis_tick, self.chart_area]:
             area.draw()
 
-
     
 class Area:
     def __init__(self, figure):
@@ -171,7 +182,6 @@ class Title(Area):
             self.txtOb.write_fron_textOb(self.figure.background, self.txt_position)
 
 
-
 class Legend(Area): # later to include true legend
     def __init__(self, figure):
         super().__init__(figure)
@@ -220,33 +230,42 @@ class xAxisLabel(Area):
 class xAxisTick(Area):
     def __init__(self, figure):
         super().__init__(figure)
+        self.xmin = None
+        self.xmax = None
     
     def calculate_ticks_string(self):
         self.ticks = []
         self.all_xdata = self.figure.chart_area.all_xdata
-        self.tick_gap = self.figure.chart_area.xdata_gap
-        self.startpos = self.figure.chart_area.x + self.figure.chart_area.chart_margin
+        startpos = self.figure.chart_area.x + self.figure.chart_area.chart_margin
         for i in range(len(self.all_xdata)):
-            self.ticks.append([self.all_xdata[i], self.startpos + i * self.tick_gap])
+            self.ticks.append([self.all_xdata[i], startpos + i * self.figure.chart_area.xdata_gap])
 
-    def calculate_ticks_numeric_WIP(self):
-        self.ticks = []
-        # calculate tick difference and min max values
-        diff = self.figure.chart_area.xdata_max - self.figure.chart_area.xdata_min
-        diff = 10 ** math.floor(math.log10(diff))
-        self.xtick_min = self.figure.chart_area.xdata_min - self.figure.chart_area.xdata_min % diff
-        self.xtick_max = self.figure.chart_area.xdata_max + (diff - self.figure.chart_area.xdata_max % diff)
+    def tick_range(self):
+        data_span = self.xmax - self.xmin
+        scale = 10 ** math.floor(math.log10(data_span))
+        tick_size_normalized_list = [5.0, 2.0, 1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]
+        tick_size_normalized = 1.0
+        for i in range(len(tick_size_normalized_list)):
+            num_tick = data_span / scale / tick_size_normalized_list[i]
+            if num_tick > MAX_TICK:
+                tick_size_normalized = tick_size_normalized_list[i-1]
+                break
+        tick_size = tick_size_normalized * scale
+        ticks = util.create_range(self.xmin/tick_size, self.xmax/tick_size)
+        return [i * tick_size for i in [round(i) for i in ticks]]
 
+    def calculate_ticks_numeric(self): # should run before drawing charts
+        if (self.figure.xmin != None) & (self.figure.xmax != None):
+            self.xmin, self.xmax = self.figure.xmin, self.figure.xmax
+            self.ticks = util.tick_range(self.xmin, self.xmax)
+            self.ticks = [i for i in self.ticks if i>=self.xmin and i<=self.xmax]
+        else:
+            self.xmin, self.xmax = min(self.figure.chart_area.all_xdata), max(self.figure.chart_area.all_xdata)
+            self.ticks = util.tick_range(self.xmin, self.xmax)
+            self.xmin, self.xmax = min(self.ticks), max(self.ticks)
 
-    def calculate_ticks_numeric(self):
-        self.ticks = []
-        diff = self.figure.chart_area.xdata_max - self.figure.chart_area.xdata_min
-        diff = 10 ** math.floor(math.log10(diff))
-        self.ticks = util.create_range(self.figure.chart_area.xdata_min, self.figure.chart_area.xdata_max, diff)
-        self.tick_gap = (self.figure.chart_area.width - 2 * self.figure.chart_area.chart_margin) / (self.figure.chart_area.xdata_max - self.figure.chart_area.xdata_min)
-        self.startpos = self.figure.chart_area.x + self.figure.chart_area.chart_margin
-        self.ticks = [[i, self.startpos + (i - self.figure.chart_area.xdata_min) * self.tick_gap] for i in self.ticks]
-
+        startpos = self.figure.chart_area.x + self.figure.chart_area.chart_margin
+        self.ticks = [[i, startpos + (i - self.xmin) * self.figure.chart_area.xdata_gap] for i in self.ticks]
 
     def write_ticks(self):
         for tick in self.ticks:
@@ -257,10 +276,6 @@ class xAxisTick(Area):
 
     def draw(self):
         self.draw_area()
-        if self.figure.chart_area.xdata_type == 'numeric':
-            self.calculate_ticks_numeric()
-        else:
-            self.calculate_ticks_string()
         self.write_ticks()
 
 class yAxisTick(Area):
@@ -307,20 +322,28 @@ class ChartArea(Area):
     def draw(self):
         self.draw_area_border()
 
-    def find_xdata_gap_numeric(self):
+    def combine_xdata(self):
         self.all_xdata = []
         for chart in self.charts:
             self.all_xdata += chart.xdata
-        if self.xdata_min == None: self.xdata_min = min(self.all_xdata) 
-        if self.xdata_max == None: self.xdata_max = max(self.all_xdata)
+        if self.xdata_type == 'str':
+            self.all_xdata = list(set(self.all_xdata))
+            self.all_xdata.sort()
+
+    def find_xdata_gap_numeric(self):
+        self.combine_xdata()
+        # calcualte xmin/xmax for chart area. Hieararchy: figure level > xticks > xdata
+        if (self.figure.xmin != None) & (self.figure.xmax != None):
+            self.xdata_min, self.xdata_max = self.figure.xmin, self.figure.xmax
+        elif (self.figure.xaxis_tick.xmin != None) & (self.figure.xaxis_tick.xmax != None):
+            self.xdata_min, self.xdata_max = self.figure.xaxis_tick.xmin, self.figure.xaxis_tick.xmax
+        else:
+            self.xdata_min, self.xdata_max = min(self.all_xdata), max(self.all_xdata)
+
         self.xdata_gap = (self.width - 2 * self.chart_margin) / (self.xdata_max - self.xdata_min)
 
     def find_xdata_gap_string(self): # instead of set + sort, category names might be sorted acc to introduction of data
-        self.all_xdata = []
-        for chart in self.charts:
-            self.all_xdata += chart.xdata
-        self.all_xdata = list(set(self.all_xdata))
-        self.all_xdata.sort()
+        self.combine_xdata()
         self.xdata_gap = (self.width - 2 * self.chart_margin) / (len(self.all_xdata) - 1)
 
     def find_ydata_multiplier(self):
@@ -368,8 +391,10 @@ class ChartArea(Area):
     def draw_all_charts(self):
         if self.xdata_type == 'numeric':
             self.find_xdata_gap_numeric()
+            self.figure.xaxis_tick.calculate_ticks_numeric()
         else:
             self.find_xdata_gap_string()
+            self.figure.xaxis_tick.calculate_ticks_string()
         self.find_ydata_multiplier()
 
         for chart in self.charts:

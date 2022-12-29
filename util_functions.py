@@ -1,4 +1,5 @@
 import math
+from settings import *
 
 def check_input_type(xdata, ydata):
     if type(xdata) == type(ydata) == list:
@@ -35,14 +36,40 @@ def check_xy_data(xdata, ydata):
             else:
                 raise KeyError('ydata must include only number types!')
 
+def check_axis_limit(lim):
+    if (type(lim) == tuple) & (len(lim) == 2):
+        if lim[1] > lim[0]:
+            if (type(lim[0]) in (int, float)) & (type(lim[1]) in (int, float)):
+                return True
+            else:
+                raise Warning('Axis limit must be tuple of numbers for (min, max). Auto-calculated xlim is applied.')
+        else:
+            raise Warning('Axis max must be higher than axis min. Auto-calculated xlim is applied.')
+    else:
+        raise Warning('Axis limit must be tuple with two numbers. Auto-calculated xlim is applied.')
 
-def create_range(start, stop, step):
+
+def create_range(start, stop):
     lst = []
     i = start
-    while True:
-        if i > stop:
-            break
+    while i < stop:
         lst.append(i)
-        i += step
-    lst = [round(i, abs(math.floor(math.log10(step)))) for i in lst]
+        i += 1
+    lst.append(i)
     return lst
+
+def tick_range(mindata, maxdata):
+    data_span = maxdata - mindata
+    scale = 10 ** math.floor(math.log10(data_span))
+    tick_size_normalized_list = [5.0, 2.0, 1.0, 0.5, 0.25, 0.1, 0.05, 0.02, 0.01]
+    tick_size_normalized = 1.0
+    for i in range(len(tick_size_normalized_list)):
+        num_tick = data_span / scale / tick_size_normalized_list[i]
+        if num_tick > MAX_TICK:
+            tick_size_normalized = tick_size_normalized_list[i-1]
+            break
+    tick_size = tick_size_normalized * scale
+    ticks = create_range(mindata/tick_size, maxdata/tick_size)
+    ticks = [i * tick_size for i in [round(i) for i in ticks]]
+    return ticks
+
