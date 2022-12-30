@@ -1,6 +1,6 @@
 ## global vars, later to be added to a config file
 BG_COLOR = (255,255,255)
-FONT_SIZE = 16
+FONT_SIZE = 10
 TEXT_COLOR = (0,0,0)
 PADDING = 10
 MAX_TICK = 10
@@ -16,3 +16,4 @@ COLORS = [
 [148, 0, 211],
 [255, 192, 203]
  ]
+

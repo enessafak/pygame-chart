@@ -71,7 +71,7 @@ def tick_range(mindata, maxdata):
     tick_size = tick_size_normalized * scale
     ticks = create_range(mindata/tick_size, maxdata/tick_size)
     ticks = [i * tick_size for i in [round(i) for i in ticks]]
-    if maxdata not in ticks:
+    if maxdata > max(ticks):
         maxtick = ticks[-1] + ticks[-1] - ticks[-2]
         ticks.append(maxtick)
     ticks = [round(i, 5) for i in ticks]
