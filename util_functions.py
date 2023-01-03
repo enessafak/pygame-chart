@@ -55,7 +55,7 @@ def create_range(start, stop):
     while i < stop:
         lst.append(i)
         i += 1
-    lst.append(i)
+    #lst.append(i)
     return lst
 
 def tick_range(mindata, maxdata):
@@ -74,6 +74,9 @@ def tick_range(mindata, maxdata):
     if maxdata > max(ticks):
         maxtick = ticks[-1] + ticks[-1] - ticks[-2]
         ticks.append(maxtick)
+    if mindata < min(ticks):
+        mintick = ticks[0] - (ticks[1] - ticks[0])
+        ticks = [mintick] + ticks
     ticks = [round(i, 5) for i in ticks]
     return ticks
 

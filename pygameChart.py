@@ -18,13 +18,17 @@ class TextFont:
         if vertical:
             self.txt = pygame.transform.rotate(self.txt, 90)
 
-    def write_fron_textOb(self, surface, position, center=True):
+    def write_fron_textOb(self, surface, position, align='center'): # align in ['center','topleft','center_vertical']
         txt_rect = self.txt.get_rect()
-        if center:
+        if align == 'center':
             txt_rect.center = position
-        else:
+        elif align == 'topleft':
             txt_rect.topleft = position
+        elif align == 'center_vertical':
+            txt_rect.left = position[0]
+            txt_rect.centery = position[1]
         surface.blit(self.txt, txt_rect)
+
 
 class Text:
     '''
@@ -42,11 +46,14 @@ class Text:
             self.txt = pygame.transform.rotate(self.txt, 90)
             self.txt_rect = self.txt.get_rect()
 
-    def write_fron_textOb(self, surface, position, center=True):
-        if center:
+    def write_fron_textOb(self, surface, position, align='center'): # align in ['center','topleft','center_vertical']
+        if align == 'center':
             self.txt_rect.center = position
-        else:
+        elif align == 'topleft':
             self.txt_rect.topleft = position
+        elif align == 'center_vertical':
+            self.txt_rect.left = position[0]
+            self.txt_rect.centery = position[1]
         surface.blit(self.txt, self.txt_rect)
 
 
@@ -106,45 +113,38 @@ class Figure:
             self.ymin = ylim[0]
             self.ymax = ylim[1]
 
-    def set_title(self, title):
+    def add_title(self, title):
         '''
-        Sets figure title to be shown at the top, center aligned.
-        title:  str
+        Adds chart title at the top of the figure
+        title:   string
         '''
-        self.title.width = self.width
-        self.title.x = 0
-        self.title.y = 0
-        self.title.adjust_inner_area()
         self.title.add_title(title)
+        self.title.show = 1
 
-    def set_legend(self):
-        self.legend.width = self.width
-        self.legend.x = 0
-        self.legend.y = self.height - (self.legend.height)
-        self.legend.adjust_inner_area()
-        self.legend.add_legend()
+    def add_legend(self):
+        '''
+        Adds legend at the bottom of the figure
+        '''
+        self.legend.show = 1
 
-    def set_yaxis_label(self, label):
+    def add_yaxis_label(self, label):
         '''
         Sets axis label for y-axis.
         label:  str
         '''
-        self.yaxis_label.height = self.height - (self.title.height + self.legend.height + self.xaxis_label.height)
-        self.yaxis_label.x = 0
-        self.yaxis_label.y = self.title.height
-        self.yaxis_label.adjust_inner_area()
         self.yaxis_label.add_label(label)
+        self.yaxis_label.show = 1
 
-    def set_xaxis_label(self, label):
+    def add_xaxis_label(self, label):
         '''
         Sets axis label for x-axis.
         label:  str
         '''
-        self.xaxis_label.width = self.width - self.yaxis_label.width
-        self.xaxis_label.x = self.yaxis_label.width
-        self.xaxis_label.y = self.height - (self.legend.height + self.xaxis_label.height)
-        self.xaxis_label.adjust_inner_area()
         self.xaxis_label.add_label(label)
+        self.xaxis_label.show = 1
+
+    def add_gridlines(self):
+        self.chart_area.gridlines = 1
 
     def set_yaxis_tick(self):
         # set y-tick size and position. initial width is set 0, to be calculated later according to tick text width
@@ -152,6 +152,7 @@ class Figure:
         self.yaxis_tick.height = self.height - (self.title.height + self.legend.height + self.xaxis_label.height + self.xaxis_tick.height)
         self.yaxis_tick.x = self.yaxis_label.width
         self.yaxis_tick.y = self.title.height
+        self.yaxis_tick.show = 1
 
     def set_xaxis_tick(self):
         # set x-tick size and position. initial height is set 0, to be calculated later according to tick text height
@@ -159,6 +160,7 @@ class Figure:
         self.xaxis_tick.height = 0 
         self.xaxis_tick.x = self.yaxis_label.width + self.yaxis_tick.width
         self.xaxis_tick.y = self.height - (self.legend.height + self.xaxis_label.height + self.xaxis_tick.height)
+        self.xaxis_tick.show = 1
 
     def set_chart_area(self):
         # set chart area size and position. chart area fills entire space left from other Area objects
@@ -166,6 +168,7 @@ class Figure:
         self.chart_area.height = self.height - (self.title.height + self.legend.height + self.xaxis_label.height + self.xaxis_tick.height)
         self.chart_area.x = self.yaxis_label.width + self.yaxis_tick.width
         self.chart_area.y = self.title.height
+        self.chart_area.show = 1
 
     def line(self, name, xdata, ydata, color=None, line_width=2):
         '''
@@ -221,11 +224,26 @@ class Figure:
             ScatterChart(name, xdata, ydata, color, radius)
         )
 
+    def set_filler(self, x, y, width, height):
+        filler = Area(self)
+        filler.x = x
+        filler.y = y
+        filler.width = width
+        filler.height = height
+        filler.show = 1
+        filler.draw_area()
+
     def draw(self):
         '''
         Draws the figure with setted areas and charts provided
-        '''        
+        '''       
+        # adjustments for size and position of Areas
+        self.title.adjust_size_pos()
+        self.legend.adjust_size_pos()
+        self.yaxis_label.adjust_size_pos()
+        self.xaxis_label.adjust_size_pos()
 
+        # chart area and ticks
         self.chart_area.combine_data()
 
         self.set_yaxis_tick()
@@ -238,9 +256,13 @@ class Figure:
         self.xaxis_tick.y = self.height - (self.legend.height + self.xaxis_label.height + self.xaxis_tick.height)
 
         self.set_chart_area()
+        self.chart_area.find_xdata_gap_ydata_multiplier()
+        self.chart_area.draw_gridlines()
         self.chart_area.draw_all_charts()
         self.chart_area.draw()
 
+        # drawing
+        self.set_filler(0, self.chart_area.y + self.chart_area.height, self.width, self.height - (self.chart_area.y + self.chart_area.height))
         self.title.draw()
         self.legend.draw()
         self.yaxis_label.draw()
@@ -264,6 +286,7 @@ class Area:
         self.innery = 0
         self.innerwidth = 0
         self.innerheight = 0
+        self.show = 0
 
     def adjust_inner_area(self):
         # in order to provide a padding for the area, there are inner and outer areas. this method adjusts inner area acc to outer area
@@ -281,13 +304,17 @@ class Area:
 
     def draw_area(self):
         # draw the area with the same background color of figure. useful for hiding chart drawings out of figure data limits
-        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        pygame.draw.rect(self.figure.background, self.figure.bg_color, self.rect)
+        if self.show:
+            self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+            pygame.draw.rect(self.figure.background, self.figure.bg_color, self.rect)
 
     def draw_area_border(self): 
         # draw the area with border and no fill color
-        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        pygame.draw.rect(self.figure.background, (0,0,0), self.rect, width=1)
+        if self.show:
+            self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+            pygame.draw.rect(self.figure.background, (0,0,0), self.rect, width=1)
+
+
 
 
 class Title(Area):
@@ -297,29 +324,93 @@ class Title(Area):
     def add_title(self, title):
         self.txtOb = Text(title)
         self.innerheight = self.txtOb.txt.get_height()
-        self.adjust_outer_area()
-        self.txt_position = (self.x + self.width / 2, self.y + self.height / 2)
+        
+    def adjust_size_pos(self):
+        self.width = self.figure.width
+        self.x = 0
+        self.y = 0
+        self.height = self.innerheight + PADDING * 2
+        self.adjust_inner_area()
 
     def draw(self):
         self.draw_area()
         if 'txtOb' in dir(self):
+            self.txt_position = (self.x + self.width / 2, self.y + self.height / 2)
             self.txtOb.write_fron_textOb(self.figure.background, self.txt_position)
+
 
 
 class Legend(Area): # later to include true legend
     def __init__(self, figure):
         super().__init__(figure)
+        self.line_height = MIN_LEGEND_LINE_HEIGHT
+        self.item_width = LEGEND_ITEM_WIDTH
 
-    def add_legend(self):
-        self.txtOb = Text('LEGEND')
-        self.innerheight = self.txtOb.txt.get_height()
+    def calculate_line_width_height(self):
+        self.width = self.figure.width
+        self.innerwidth = self.width - 2 * PADDING
+
+        # charts = [Text(chart.name) for chart in self.figure.chart_area.charts]
+        charts = self.figure.chart_area.chart_names
+        charts = [Text(chart) for chart in charts]
+        self.lines = []
+        width = 0
+        line = 1
+        for chart in charts:
+            self.line_height = max(self.line_height, chart.txt.get_height())
+            name_w = self.item_width + PADDING + chart.txt.get_width() + PADDING # chart item + padding + chart name + padding
+            if width + name_w > self.innerwidth: 
+                line += 1
+                self.lines.append(width)
+                width = name_w
+            else:
+                width += name_w
+        self.lines.append(width)
+
+    def adjust_size_pos(self):
+        self.calculate_line_width_height()
+        self.innerwidth = max(self.lines)
+        self.innerheight = self.line_height * len(self.lines)
+        self.innerx = (self.figure.width - self.innerwidth) / 2
+        self.innery = self.figure.height - (self.innerheight + PADDING)
         self.adjust_outer_area()
-        self.txt_position = (self.x + self.width / 2, self.y + self.height / 2)
+
+    def write_legend_items(self):
+        charts = self.figure.chart_area.charts
+        i = 0
+        y = self.innery
+        for line_width in self.lines:
+            width = 0
+            x = self.innerx
+            while width < line_width:
+                chart = charts[i]
+                self.draw_legend_item(chart, (x+ width, y))
+                width += self.item_width + PADDING
+                width_inc = self.write_chart_name(chart, (x + width, y + self.line_height / 2))
+                width += width_inc + PADDING
+                i += 1   
+            y += self.line_height
+                
+    def draw_legend_item(self, chart, pos):
+        if chart.__class__ == LineChart:
+            linepos = (pos[0], pos[1] + self.line_height / 2)
+            pygame.draw.aaline(self.figure.background, chart.color, linepos, (linepos[0] + self.item_width, linepos[1]))
+        elif chart.__class__ == BarChart:
+            pygame.draw.rect(self.figure.background, chart.color, pygame.Rect(pos[0], pos[1], self.item_width, self.line_height))
+        elif chart.__class__ == ScatterChart:
+            pygame.draw.circle(self.figure.background, chart.color, (pos[0] + self.item_width / 2, pos[1] + self.line_height / 2), 3)
+
+
+    def write_chart_name(self, chart, pos):
+        txt = Text(chart.name)
+        txt.write_fron_textOb(self.figure.background, pos, 'center_vertical')
+        return txt.txt.get_width()
+
 
     def draw(self):
         self.draw_area()
-        if 'txtOb' in dir(self):
-            self.txtOb.write_fron_textOb(self.figure.background, self.txt_position)
+        self.draw_area_border()
+        self.write_legend_items()
 
 class yAxisLabel(Area):
     def __init__(self, figure):
@@ -328,12 +419,18 @@ class yAxisLabel(Area):
     def add_label(self, label):
         self.txtOb = Text(label, True)
         self.innerwidth = self.txtOb.txt.get_width()
-        self.adjust_outer_area()
-        self.txt_position = (self.x + self.width / 2, self.y + self.height / 2)
+
+    def adjust_size_pos(self):
+        self.height = self.figure.height - (self.figure.title.height + self.figure.legend.height + self.figure.xaxis_label.height)
+        self.x = 0
+        self.y = self.figure.title.height
+        self.width = self.innerwidth + PADDING * 2
+        self.adjust_inner_area()
 
     def draw(self):
         self.draw_area()
         if 'txtOb' in dir(self):
+            self.txt_position = (self.x + self.width / 2, self.y + self.height / 2)
             self.txtOb.write_fron_textOb(self.figure.background, self.txt_position)
 
 class xAxisLabel(Area):
@@ -343,12 +440,18 @@ class xAxisLabel(Area):
     def add_label(self, label):
         self.txtOb = Text(label, False)
         self.innerheight = self.txtOb.txt.get_height()
-        self.adjust_outer_area()
-        self.txt_position = (self.x + self.width / 2, self.y + self.height / 2)
+
+    def adjust_size_pos(self):
+        self.width = self.figure.width - self.figure.yaxis_label.width
+        self.height = self.innerheight + PADDING * 2
+        self.x = self.figure.yaxis_label.width
+        self.y = self.figure.height - (self.figure.legend.height + self.height)
+        self.adjust_inner_area()
 
     def draw(self):
         self.draw_area()
         if 'txtOb' in dir(self):
+            self.txt_position = (self.x + self.width / 2, self.y + self.height / 2)
             self.txtOb.write_fron_textOb(self.figure.background, self.txt_position)
 
 class xAxisTick(Area):
@@ -433,7 +536,7 @@ class yAxisTick(Area):
     
     def write_ticks(self):
         # first get start position from chart area. then adjust ticks list as [tick, position]
-        startpos = self.figure.chart_area.y
+        startpos = self.figure.chart_area.y + self.figure.chart_area.chart_margin
         self.ticks = [[i, startpos + (self.ymax - i) * self.figure.chart_area.ydata_multiplier] for i in self.ticks]
 
         # for each [tick, position] couple create a Text object and write center-aligned
@@ -450,8 +553,9 @@ class ChartArea(Area):
         super().__init__(figure)
         self.charts = []
         self.chart_names = []
-        self.chart_margin = PADDING
+        self.chart_margin = CHART_MARGIN
         self.xdata_type = None
+        self.gridlines = 0
 
     def check_xdata(self, chart):
         # checks if provided xdata is aligned with previously provided charts. cannot draw multiple charts with one numberic and one string
@@ -530,7 +634,14 @@ class ChartArea(Area):
         else:
             self.ydata_min, self.ydata_max = min(self.all_ydata), max(self.all_ydata)
 
-        self.ydata_multiplier = self.height / (self.ydata_max - self.ydata_min)
+        self.ydata_multiplier = (self.height - 2 * self.chart_margin) / (self.ydata_max - self.ydata_min)
+
+    def find_xdata_gap_ydata_multiplier(self):
+        if self.xdata_type == 'numeric':
+            self.find_xdata_gap_numeric()
+        else:
+            self.find_xdata_gap_string()
+        self.find_ydata_multiplier()
 
     def adjust_data_for_line_scatter(self, chart):
         # data is a list of tuples for xdata and ydata
@@ -557,9 +668,9 @@ class ChartArea(Area):
         data = self.adjust_data_for_line_scatter(chart)
 
         x = self.x + self.chart_margin
-        y = self.y
+        y = self.y + self.chart_margin
         for i in range(len(data) - 1):
-            pygame.draw.line(
+            pygame.draw.aaline(
                 self.figure.background,
                 chart.color,
                 (x + data[i][0], y + data[i][1]),
@@ -570,7 +681,7 @@ class ChartArea(Area):
     def draw_scatter(self, chart):
         data = self.adjust_data_for_line_scatter(chart)
         x = self.x + self.chart_margin
-        y = self.y
+        y = self.y + self.chart_margin
         for i in range(len(data)):
             pygame.draw.circle(
                 self.figure.background, 
@@ -602,7 +713,7 @@ class ChartArea(Area):
         data = self.adjust_data_for_bar(chart)
 
         x = self.x + self.chart_margin
-        y = self.y + self.ydata_max * self.ydata_multiplier # position of 0 on y-axis
+        y = self.y + self.chart_margin + self.ydata_max * self.ydata_multiplier # position of 0 on y-axis
         if chart.bar_width == None:
             chart.bar_width = self.xdata_gap/3*2
 
@@ -618,14 +729,17 @@ class ChartArea(Area):
                     )
             )
 
-    def draw_all_charts(self):
-        if self.xdata_type == 'numeric':
-            self.find_xdata_gap_numeric()
-        else:
-            self.find_xdata_gap_string()
-        self.find_ydata_multiplier()
 
-        for chart in self.charts:
+    def get_certain_chart_type(self, chart_type):
+        return [chart for chart in self.charts if chart.__class__.__name__ == chart_type]
+
+
+    def draw_all_charts(self):
+        charts = []
+        for chart_type in ['BarChart','LineChart','ScatterChart']:
+            charts += self.get_certain_chart_type(chart_type)
+
+        for chart in charts:
             if chart.__class__ == LineChart:
                 self.draw_line(chart)
             elif chart.__class__ == BarChart:
@@ -634,6 +748,32 @@ class ChartArea(Area):
                 self.draw_scatter(chart)
             else:
                 pass
+
+    def draw_vertical_gridlines(self):
+        ticks = self.figure.xaxis_tick.ticks
+        startpos = self.x + self.chart_margin
+        if self.xdata_type == 'numeric':
+            ticks = [startpos + (i - self.figure.xaxis_tick.xmin) * self.xdata_gap for i in ticks]
+        else:
+            for i in range(len(ticks)):
+                ticks[i] = startpos + i * self.xdata_gap
+
+        for tick in ticks:
+            pygame.draw.aaline(self.figure.background, GRID_COLOR, (tick, self.y), (tick, self.y + self.height))
+
+    def draw_horizontal_gridlines(self):
+        ticks = self.figure.yaxis_tick.ticks
+        startpos = self.y + self.chart_margin
+        ticks = [startpos + (self.figure.yaxis_tick.ymax - i) * self.ydata_multiplier for i in ticks]
+
+        for tick in ticks:
+            pygame.draw.aaline(self.figure.background, GRID_COLOR, (self.x, tick), (self.x + self.width, tick))
+
+    def draw_gridlines(self):
+        if self.gridlines:
+            self.draw_horizontal_gridlines()
+            self.draw_vertical_gridlines()
+
 
 
 class ChartType:

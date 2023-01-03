@@ -2,8 +2,13 @@
 BG_COLOR = (255,255,255)
 FONT_SIZE = 10
 TEXT_COLOR = (0,0,0)
-PADDING = 10
+PADDING = 5
 MAX_TICK = 10
+GRID_COLOR = (224,224,224)
+CHART_MARGIN = 10
+MIN_LEGEND_LINE_HEIGHT = 10
+LEGEND_ITEM_WIDTH = 10
+
 
 COLORS = [
 # 'tomato',palegreen,'gold','mediumaquamarine','teal','royalblue','darkviolet','pink'
