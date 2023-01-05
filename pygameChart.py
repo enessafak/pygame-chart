@@ -102,7 +102,7 @@ class Figure:
         self.chart_area.xdata_min = self.chart_area.xdata_max = None
         self.chart_area.ydata_min = self.chart_area.ydata_max = None
 
-    def create_figure(self):
+    def _create_figure(self):
         # blit figure background to screen
         self.screen.blit(self.background, (self.x, self.y))
         self.background.fill(self.bg_color)
@@ -253,7 +253,9 @@ class Figure:
     def draw(self):
         '''
         Draws the figure with setted areas and charts provided. Final method to show the figure
-        '''       
+        '''    
+        self._create_figure()
+
         # adjustments for size and position of Areas
         self.title._adjust_size_pos()
         self.legend._adjust_size_pos()
@@ -427,9 +429,10 @@ class Legend(Area):
 
 
     def _draw(self):
-        self.draw_area()
-        self.draw_area_border()
-        self._write_legend_items()
+        if self.show:
+            self.draw_area()
+            self.draw_area_border()
+            self._write_legend_items()
 
 class yAxisLabel(Area):
     def __init__(self, figure):
