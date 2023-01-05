@@ -44,6 +44,9 @@ while True:
     figure.draw()    
     pygame.display.update()
 ```
+<img src="https://user-images.githubusercontent.com/57540559/210799934-c8a39935-b797-4947-8579-8c84ce25d882.jpeg" alt="Basic figure with line chart" height=500>
+
+
 
 ### Figure with several charts and properties
 
@@ -78,6 +81,9 @@ while True:
     figure.draw()    
     pygame.display.update()
 ```
+
+<img src="https://user-images.githubusercontent.com/57540559/210801090-0e6781e8-12ab-4dcb-940d-5c14a862f3ac.jpeg" alt="Figure with properties" height=500>
+
 
 ## Documentation
 
