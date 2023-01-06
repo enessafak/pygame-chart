@@ -747,7 +747,7 @@ class ChartArea(Area):
                     x + data[i][0] - chart.bar_width / 2, 
                     y - data[i][1] if data[i][1]>=0 else y, # start from data above 0-point for positive values, at 0-point for negative values
                     chart.bar_width, 
-                    abs(data[i][1]) # handle both positive and negative values
+                    abs(data[i][1]) + 1 # handle both positive and negative values
                     )
             )
 
