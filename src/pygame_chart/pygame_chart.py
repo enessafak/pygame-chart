@@ -1,6 +1,6 @@
 import pygame, math, pygame.freetype
-from settings import *
-import util_functions as util
+from .settings import *
+from .util_functions import *
 
 
 class TextFont:
@@ -112,7 +112,7 @@ class Figure:
         Sets xmin and xmax for all charts. Drawings out of these limits are unvisible
         xlim:   tuple(xmin, xmax)
         '''
-        if util.check_axis_limit(xlim):
+        if check_axis_limit(xlim):
             self.xmin = xlim[0]
             self.xmax = xlim[1]
             self.chart_area.xdata_type = 'numeric'
@@ -122,7 +122,7 @@ class Figure:
         Sets ymin and ymax for all charts. Drawings out of these limits are unvisible
         ylim:   tuple(ymin, ymax)
         '''
-        if util.check_axis_limit(ylim):
+        if check_axis_limit(ylim):
             self.ymin = ylim[0]
             self.ymax = ylim[1]
 
@@ -491,12 +491,12 @@ class xAxisTick(Area):
         if (self.figure.xmin != None) & (self.figure.xmax != None):
             # if xlim is set on figure level, use these boundaries in tick calculation. later remove any tick outside figure limit
             self.xmin, self.xmax = self.figure.xmin, self.figure.xmax
-            self.ticks = util.tick_range(self.xmin, self.xmax)
+            self.ticks = tick_range(self.xmin, self.xmax)
             self.ticks = [i for i in self.ticks if i>=self.xmin and i<=self.xmax]
         else:
             # if no xlim is set on figure level, use min/max values from charts.
             self.xmin, self.xmax = min(self.figure.chart_area.all_xdata), max(self.figure.chart_area.all_xdata)
-            self.ticks = util.tick_range(self.xmin, self.xmax)
+            self.ticks = tick_range(self.xmin, self.xmax)
             self.xmin, self.xmax = min(self.ticks), max(self.ticks)
 
     def _calculate_ticks(self):
@@ -542,12 +542,12 @@ class yAxisTick(Area):
         if (self.figure.ymin != None) & (self.figure.ymax != None):
             # if ylim is set on figure level, use these boundaries in tick calculation. later remove any tick outside figure limit
             self.ymin, self.ymax = self.figure.ymin, self.figure.ymax
-            self.ticks = util.tick_range(self.ymin, self.ymax)
+            self.ticks = tick_range(self.ymin, self.ymax)
             self.ticks = [i for i in self.ticks if i>=self.ymin and i<=self.ymax]
         else:
             # if no ylim is set on figure level, use min/max values from charts.
             self.ymin, self.ymax = min(self.figure.chart_area.all_ydata), max(self.figure.chart_area.all_ydata)
-            self.ticks = util.tick_range(self.ymin, self.ymax)
+            self.ticks = tick_range(self.ymin, self.ymax)
             self.ymin, self.ymax = min(self.ticks), max(self.ticks)
 
     def _calculate_width(self):
@@ -803,7 +803,7 @@ class ChartArea(Area):
 class ChartType:
     def __init__(self, name, xdata, ydata, color):
         self.name = name
-        check = util.check_xy_data(xdata, ydata)
+        check = check_xy_data(xdata, ydata)
         if check:
             self.xdata = xdata
             self.ydata = ydata

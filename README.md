@@ -10,7 +10,8 @@ I hope pygameChart will be useful addition to your pyhame projects. Continue rea
 
 ## Installation
 
-Currently the package is only on Github, https://github.com/enessafak/pygameChart. You can download files directly or git clone. Only requirement for the package is python>=3.9.10 and pygame>=2.1.2
+Please consider project page on Github, https://github.com/enessafak/pygameChart.
+The module requires python>=3.9.10 and pygame>=2.1.2
 
 ## Quickstart
 
@@ -22,14 +23,14 @@ Basic use of the package creates following result.
 
 ```python
 import pygame, sys
-import pygameChart as chart
+import pygame_chart as pyc
 
 # pygame app for figure to run
 pygame.init()
 screen = pygame.display.set_mode((800,600))
 
 # Figure instance on screen with position and size
-figure = chart.Figure(screen, 50, 50, 700, 500)
+figure = pyc.Figure(screen, 50, 50, 700, 500)
 
 while True:
     events = pygame.event.get()
@@ -52,14 +53,14 @@ while True:
 
 ```python
 import pygame, sys
-import pygameChart as chart
+import pygame_chart as pyc
 
 # pygame app for figure to run
 pygame.init()
 screen = pygame.display.set_mode((800,600))
 
 # Figure instance on screen with position and size
-figure = chart.Figure(screen, 50, 50, 700, 500)
+figure = pyc.Figure(screen, 50, 50, 700, 500)
 
 while True:
     events = pygame.event.get()

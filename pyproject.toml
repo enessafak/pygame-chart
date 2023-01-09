@@ -1,0 +1,26 @@
+# Within pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygame_chart"
+version = "1.0.0" 
+authors = [
+  { name="Enes Safak", email="safakenes@gmail.com" },
+]
+description = "A package for drawing charts in pygame apps"
+readme = "README.md"
+requires-python = ">=3.9.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [ 
+	"pygame>=2.1.2"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/enessafak/pygame-chart"

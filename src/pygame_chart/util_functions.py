@@ -1,5 +1,5 @@
 import math
-from settings import *
+from .settings import *
 
 def check_input_type(xdata, ydata):
     if type(xdata) == type(ydata) == list:
