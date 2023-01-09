@@ -10,7 +10,12 @@ I hope pygameChart will be useful addition to your pyhame projects. Continue rea
 
 ## Installation
 
-Please consider project page on Github, https://github.com/enessafak/pygameChart.
+Package in PyPI repository under pygame-chart.
+```python
+pip install pygame-chart
+```
+
+Please consider project page on Github, https://github.com/enessafak/pygame-chart.
 The module requires python>=3.9.10 and pygame>=2.1.2
 
 ## Quickstart
